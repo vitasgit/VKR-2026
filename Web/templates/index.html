@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Главная</title>
+</head>
+<body>
+   <h1>Светодиод</h1>
+   <form action="/" method="post">
+        <button type="submit" name="submit" value="1" >Включить</button><br><br>
+        <button type="submit" name="submit" value="0" >Выключить</button><br><br>
+   </form>
+</body>
+</html>
