@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from RF24 import RF24, RF24_PA_LOW, RF24_250KBPS, RF24_DRIVER
 import time, requests
 
-ESP_IP= "http://192.168.0.16";
+ESP_IP= "http://192.168.0.13";
 app = Flask(__name__)
 
 rf24_ard = RF24(73, 11)  # (ce_pin, csn_pin)
@@ -24,7 +24,7 @@ def init_rf24():
     return True
 
 
-def send_cmd(cmd):
+def send_esp32(cmd):
     # проверка что команда корректная
     # ...
     url = f"{ESP_IP}/?command={cmd}"
@@ -57,16 +57,29 @@ def send_rf24(cmd):
 
 
 
-
 @app.route("/", methods=["POST", "GET"])
-def index():
+def index():    
+    return render_template('index.html')
+
+
+@app.route("/esp32", methods=["POST", "GET"])
+def toESP32():
+    if request.method == "POST":
+        cmd = request.form.get('esp32')   # обращаемся к полю submit (name="submit")
+        #print(request.form.get('submit'))
+
+        send_esp32(cmd)
+        # сделать проверку что ф-ция сработала как в RF24
+        #if (send_esp32(cmd)): print("ОК")
+    
+    return render_template('index.html')
+
+
+@app.route("/RF24", methods=["POST", "GET"])
+def toRF24():
     if request.method == "POST":
         cmd = request.form.get('RF24')   # обращаемся к полю submit (name="submit")
-        #send_cmd(cmd)
-        #print(request.form.get('submit'))  # отладка
-        #if (send_cmd(cmd)): print("ОК")
 
-        # RF24
         if send_rf24(cmd): print("RF24 - OK")
         else:
             print("RF24 - не передает!!!!!")
