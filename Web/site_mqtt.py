@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request
 from RF24 import RF24, RF24_PA_LOW, RF24_250KBPS, RF24_DRIVER
 import time, requests
-import paho.mqtt.publish as publish
+#import paho.mqtt.publish as publish
+from paho.mqtt import client as mqtt_client
 
 ESP_IP= "http://192.168.0.13";
 app = Flask(__name__)
@@ -37,7 +38,8 @@ def send_esp32(cmd):
     except:
         print("ошибка")
 
-def send_esp32_mqtt(cmd):
+
+def send_esp32_mqtt_single(cmd):
     # print(publish.single.__doc__)
     publish.single(topic="home/led",
                    payload=cmd,
@@ -46,6 +48,22 @@ def send_esp32_mqtt(cmd):
                    port=1883,
                    auth={'username':"vitaly", 'password':"123456"}
                    )
+
+
+def mqtt_connect(cmd):
+    # создаю объект client типа mqtt_client.Client(). paho.mqtt.client
+    client = mqtt_client.Client(
+        client_id="id_client",
+        api=mqtt_client.CallbackAPIVersion.VERSION2,
+    )
+
+    # в чем разница
+    client.username("vitaly")
+    client.password("123456")
+    # client.username_pw_set("vitaly", "123456")
+    client.connect(host="localhost", port=1883, keepalive=60)  # каждые 60 сек шлем на сервер ping живности
+
+    return client
 
 
 def send_rf24(cmd):
@@ -104,5 +122,8 @@ if __name__ == '__main__':
     if (init_rf24() == False):
         print("rf24 не работает")
         exit()
+
+    client = mqtt_connect()
+    client.loop_start()
     
     app.run(host='0.0.0.0', port=5000, debug=False)
