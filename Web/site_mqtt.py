@@ -50,16 +50,14 @@ def send_esp32_mqtt_single(cmd):
                    )
 
 
-def mqtt_connect(cmd):
+def mqtt_connect():
     # создаю объект client типа mqtt_client.Client(). paho.mqtt.client
+    # help(mqtt_client.Client)
     client = mqtt_client.Client(
-        client_id="id_client",
-        api=mqtt_client.CallbackAPIVersion.VERSION2,
+        client_id="id123",
+        callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
     )
 
-    # в чем разница
-    client.username("vitaly")
-    client.password("123456")
     # client.username_pw_set("vitaly", "123456")
     client.connect(host="localhost", port=1883, keepalive=60)  # каждые 60 сек шлем на сервер ping живности
 
@@ -98,9 +96,15 @@ def toESP32():
         #print(request.form.get('submit'))
 
         #send_esp32(cmd)  # HTTP
-        send_esp32_mqtt(cmd)
+        # send_esp32_mqtt(cmd)  # mqtt
+        client.publish(topic="home/led",
+                   payload=cmd,
+                   qos=1,
+                   retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
+                   )
         # сделать проверку что ф-ция сработала как в RF24
         #if (send_esp32(cmd)): print("ОК")
+
     
     return render_template('index.html')
 
