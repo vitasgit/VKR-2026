@@ -39,15 +39,17 @@ def send_esp32(cmd):
         print("ошибка")
 
 
-def send_esp32_mqtt_single(cmd):
-    # print(publish.single.__doc__)
-    publish.single(topic="home/led",
+def send_esp32_mqtt(cmd):
+    # проверка что команда корректная
+    # ...
+    
+    client.publish(topic="home/led",
                    payload=cmd,
-                   qos=0,
-                   hostname="localhost",
-                   port=1883,
-                   auth={'username':"vitaly", 'password':"123456"}
+                   qos=0,  # без подтверждений
+                   retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
                    )
+    # return True если успешно выполнился client.publish()
+
 
 
 def mqtt_connect():
@@ -58,8 +60,10 @@ def mqtt_connect():
         callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
     )
 
-    # client.username_pw_set("vitaly", "123456")
+    client.username_pw_set("vitaly", "123456")
     client.connect(host="localhost", port=1883, keepalive=60)  # каждые 60 сек шлем на сервер ping живности
+    
+    # проверка на connect. is_connected() → bool
 
     return client
 
@@ -83,7 +87,6 @@ def send_rf24(cmd):
     return res
 
 
-
 @app.route("/", methods=["POST", "GET"])
 def index():    
     return render_template('index.html')
@@ -96,12 +99,7 @@ def toESP32():
         #print(request.form.get('submit'))
 
         #send_esp32(cmd)  # HTTP
-        # send_esp32_mqtt(cmd)  # mqtt
-        client.publish(topic="home/led",
-                   payload=cmd,
-                   qos=1,
-                   retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
-                   )
+        send_esp32_mqtt(cmd)  # mqtt
         # сделать проверку что ф-ция сработала как в RF24
         #if (send_esp32(cmd)): print("ОК")
 
@@ -125,9 +123,11 @@ def toRF24():
 if __name__ == '__main__':
     if (init_rf24() == False):
         print("rf24 не работает")
-        exit()
-
+        # exit()
+        
+    # обработка случая, когда служба mosquitto выключена
     client = mqtt_connect()
+    # print("client.is_connected() == ", client.is_connected())
     client.loop_start()
     
     app.run(host='0.0.0.0', port=5000, debug=False)
