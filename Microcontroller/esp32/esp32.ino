@@ -10,10 +10,21 @@ int ledPin = 2;
 
 // WiFiServer EspServer(80);  // HTTP
 IPAddress ip_orange(192, 168, 0, 18);   // 4 байта
-WiFiClient espClient;  // TCP/IP
-PubSubClient client(espClient);  // указываем в качестве парам, на каком стеке/протоколе будет связь
+WiFiClient wifiClient;  // TCP/IP
+PubSubClient mqttClient(wifiClient);  // указываем в качестве парам, на каком стеке/протоколе будет связь
 
-void callback(char* topic, byte* payload, unsigned int length) {
+// https://pubsubclient.knolleary.net/api#publish
+void toState(char* state)
+{
+  mqttClient.publish("home/led/state",  // topic const char[]
+                    state,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
+                    //sizeof(val),  // length unsigned int
+                    true  // retained boolean (optional)
+                    );
+}
+
+void callback(char* topic, byte* payload, unsigned int length)
+{
   if (length == 0) {return;}  // проверка на пустые сообщения
 
 
@@ -22,35 +33,36 @@ void callback(char* topic, byte* payload, unsigned int length) {
   strCmd[length] = '\0';
 
   if (strcmp(strCmd, "ledOn") == 0) {
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(ledPin, HIGH); toState("ON");
     Serial.println(strCmd);
   } 
   else if (strcmp(strCmd, "ledOff") == 0) {
-    digitalWrite(ledPin, LOW);
+    digitalWrite(ledPin, LOW); toState("OFF");
     Serial.println(strCmd);
   }
   else {Serial.println("ошибка передачи mqtt");}
 
 }
 
-void reconnect() {
+void reconnect() 
+{
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "espClient-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
     // boolean connect (clientID, [username, password], [willTopic, willQoS, willRetain, willMessage], [cleanSession])
-    if (client.connect(clientId.c_str(), "vitaly", "123456")) {  // id, [имя_юзера, пароль] - пользователь из passwd, mqtt server
+    if (mqttClient.connect(clientId.c_str(), "vitaly", "123456")) {  // id, [имя_юзера, пароль] - пользователь из passwd, mqtt server
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
+      mqttClient.publish("outTopic", "hello world");
       // ... and resubscribe
-      client.subscribe("home/led");
+      mqttClient.subscribe("home/led");
     } else {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(mqttClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -58,7 +70,8 @@ void reconnect() {
   }
 }
 
-void setup() {
+void setup() 
+{
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
 
@@ -70,22 +83,24 @@ void setup() {
   }
 
   Serial.println(WiFi.localIP());
-  client.setCallback(callback);
-  client.setServer(ip_orange, 1883);  // ip сервера и порт, mqtt server
+  mqttClient.setCallback(callback);
+  mqttClient.setServer(ip_orange, 1883);  // ip сервера и порт, mqtt server
   //EspServer.begin();  // HTTP
-
+  Serial.println("mqtt server...");
+  
   digitalWrite(ledPin, HIGH);
 
   //char[256] data;
 }
 
-void loop() {
+void loop() 
+{
   
   // mqtt server
-  if (!client.connected()) {
+  if (!mqttClient.connected()) {
     reconnect();
   }
-  client.loop();  // обработка клиента
+  mqttClient.loop();  // обработка клиента
   
   
   // передача по HTTP
