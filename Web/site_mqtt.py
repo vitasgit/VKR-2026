@@ -43,7 +43,7 @@ def send_esp32_mqtt(cmd):
     # проверка что команда корректная
     # ...
     
-    client.publish(topic="home/led",
+    mqttClient.publish(topic="home/led",
                    payload=cmd,
                    qos=0,  # без подтверждений
                    retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
@@ -53,19 +53,36 @@ def send_esp32_mqtt(cmd):
 
 
 def mqtt_connect():
-    # создаю объект client типа mqtt_client.Client(). paho.mqtt.client
+    # Client.on_connect
+    def mqtt_reconnect(mqttClient, userdata, flags, reason_code, properties=None):
+        if reason_code == 0: print("подключен mqtt")
+        else: print(f"ошибка: {reason_code}")
+        mqttClient.subscribe(topic="home/led/state")
+
+    # client.on_message
+    # mqttmessage - class paho.mqtt.client.MQTTMessage
+    def mqtt_message(mqttClient, userdata, mqttmessage):
+        strMessage = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
+        print(strMessage)
+        
+    
+    # создаю объект mqttClient типа mqtt_client.Client(). paho.mqtt.client
     # help(mqtt_client.Client)
-    client = mqtt_client.Client(
+    mqttClient = mqtt_client.Client(
         client_id="id123",
         callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
     )
 
-    client.username_pw_set("vitaly", "123456")
-    client.connect(host="localhost", port=1883, keepalive=60)  # каждые 60 сек шлем на сервер ping живности
+    mqttClient.username_pw_set("vitaly", "123456")
+    mqttClient.on_connect = mqtt_reconnect
+    mqttClient.on_message = mqtt_message
+    mqttClient.connect(host="localhost", port=1883, keepalive=60)  # каждые 60 сек шлем на сервер ping живности
     
     # проверка на connect. is_connected() → bool
 
-    return client
+    return mqttClient
+
+    
 
 
 def send_rf24(cmd):
@@ -124,10 +141,11 @@ if __name__ == '__main__':
     if (init_rf24() == False):
         print("rf24 не работает")
         # exit()
-        
+    
     # обработка случая, когда служба mosquitto выключена
-    client = mqtt_connect()
-    # print("client.is_connected() == ", client.is_connected())
-    client.loop_start()
+    # reconnect как в esp32
+    mqttClient = mqtt_connect()
+    # print("mqttClient.is_connected() == ", mqttClient.is_connected())
+    mqttClient.loop_start()
     
     app.run(host='0.0.0.0', port=5000, debug=False)
