@@ -9,6 +9,9 @@ app = Flask(__name__)
 
 rf24_ard = RF24(73, 11)  # (ce_pin, csn_pin)
 pipe1_addr = b"1Node"  # [49, 78, 111, 100, 101]
+
+msgState = ""
+
 def init_rf24():
     if not(rf24_ard.begin()):
         return False
@@ -62,8 +65,9 @@ def mqtt_connect():
     # client.on_message
     # mqttmessage - class paho.mqtt.client.MQTTMessage
     def mqtt_message(mqttClient, userdata, mqttmessage):
-        strMessage = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
-        print(strMessage)
+        global msgState
+        msgState = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
+        print(msgState)
         
     
     # создаю объект mqttClient типа mqtt_client.Client(). paho.mqtt.client
@@ -105,8 +109,8 @@ def send_rf24(cmd):
 
 
 @app.route("/", methods=["POST", "GET"])
-def index():    
-    return render_template('index.html')
+def index():
+    return render_template('index.html', state=msgState)
 
 
 @app.route("/esp32", methods=["POST", "GET"])
