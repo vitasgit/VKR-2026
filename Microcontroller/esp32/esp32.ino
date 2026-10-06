@@ -14,7 +14,7 @@ WiFiClient wifiClient;  // TCP/IP
 PubSubClient mqttClient(wifiClient);  // указываем в качестве парам, на каком стеке/протоколе будет связь
 
 // https://pubsubclient.knolleary.net/api#publish
-void toState(char* state)
+void toBroker(char* state)
 {
   mqttClient.publish("home/led/state",  // topic const char[]
                     state,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
@@ -33,11 +33,11 @@ void callback(char* topic, byte* payload, unsigned int length)
   strCmd[length] = '\0';
 
   if (strcmp(strCmd, "ledOn") == 0) {
-    digitalWrite(ledPin, HIGH); toState("ON");
+    digitalWrite(ledPin, HIGH); toBroker("ON");
     Serial.println(strCmd);
   } 
   else if (strcmp(strCmd, "ledOff") == 0) {
-    digitalWrite(ledPin, LOW); toState("OFF");
+    digitalWrite(ledPin, LOW); toBroker("OFF");
     Serial.println(strCmd);
   }
   else {Serial.println("ошибка передачи mqtt");}
