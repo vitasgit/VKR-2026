@@ -7,8 +7,7 @@ rf24_ard = RF24(73, 11)  # (ce_pin, csn_pin)
 pipe1_addr = b"1Node"  # [49, 78, 111, 100, 101]
 
 def init_rf24():
-    if not(rf24_ard.begin()):
-        return False
+    if not(rf24_ard.begin()): return False
     
     rf24_ard.setPALevel(RF24_PA_LOW)        # мощность передатчика (low = -12 dBm)
     rf24_ard.setDataRate(RF24_250KBPS)      # Скорость передачи данных, чем меньше - тем дальше (скорость приема и передачи должна быть одинаковая)
@@ -44,6 +43,7 @@ def mqtt_connect():
                                 qos=0,  # без подтверждений
                                 retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
                                )
+            print("OK - send_rf24 !!!!!!!")
         else: print("ошибка - send_rf24 !!!!!!!")
             
         
@@ -69,7 +69,8 @@ def mqtt_connect():
 
 def send_rf24(cmd):
     # проверка что команда корректная
-    # ...
+    # ..
+    print("send_rf24 - cmd: ", cmd)
     if cmd == "1": data = b"\x01"
     elif cmd == "0": data = b"\x00"
     else:
