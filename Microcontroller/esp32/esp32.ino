@@ -9,7 +9,7 @@ const char* password = MY_PASSWORD;
 int ledPin = 2;
 
 // WiFiServer EspServer(80);  // HTTP
-IPAddress ip_orange(192, 168, 0, 18);   // 4 байта
+IPAddress ip_orange(192, 168, 0, 101);   // 4 байта
 WiFiClient wifiClient;  // TCP/IP
 PubSubClient mqttClient(wifiClient);  // указываем в качестве парам, на каком стеке/протоколе будет связь
 
