@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-import time, requests
+import time, requests, json
 #import paho.mqtt.publish as publish
 from paho.mqtt import client as mqtt_client
 
@@ -79,6 +79,54 @@ def toRF24():
                    )
     return render_template('index.html')
 
+
+# Получаем запрос от Яндекса и возвращаем ответ
+# req - запрос от яндекса
+# подробнее в доке: https://yandex.ru/dev/dialogs/alice/doc/ru/response
+# пример: https://github.com/yandex/alice-skills/blob/master/python/buy-elephant/now/api.py
+@app.route("/alice/SECRET_URL", methods=["POST"])
+def handle_yandex():
+    req = request.json
+    print(req)
+
+    # ответ яндексу
+    res = {
+        "response": {
+            "text": "Включаю свет",  # !! баг
+            "end_session": False
+        },
+        "version": "1.0"
+    }
+
+    # Обрабатываем ответ пользователя
+    # original_utterance - Полный текст пользовательского запроса, максимум 1024 символа
+    # command - нормализованный текст запроса
+    # нет проверки на случай если command в запросе нет
+
+    # new - boolean, если true, то сессия новая
+    if (req['session']['new']): res['response']['text'] = 'Привет! Я умею только включать и выключать свет'  # !! баг
+    if ("включи" in req["request"]["command"] and
+        "свет" in req["request"]["command"]
+        ):
+        res['response']['text'] = 'Включаю свет'
+        send_esp32_mqtt("ledOn")
+
+    elif ("выключи" in req["request"]["command"] and
+        "свет" in req["request"]["command"]
+        ):
+        res['response']['text'] = 'Выключаю'
+        send_esp32_mqtt("ledOff")
+
+    else:
+        res['response']['text'] = 'Не поняла. Я умею только включать и выключать свет'
+
+    return json.dumps(
+        res,
+        ensure_ascii=False,  # поддержка русского
+        indent=2  # два пробела
+        )
+
+    
 
 if __name__ == '__main__':    
     # обработка случая, когда служба mosquitto выключена
