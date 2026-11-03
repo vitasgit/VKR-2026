@@ -9,7 +9,7 @@ def send_esp32_mqtt(cmd):
     # проверка что команда корректная
     # ...
     
-    mqttClient.publish(topic="home/led",
+    mqttClient.publish(topic="home/devices/esp_led/cmd",
                    payload=cmd,
                    qos=0,  # без подтверждений
                    retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
@@ -17,18 +17,29 @@ def send_esp32_mqtt(cmd):
     # return True если успешно выполнился client.publish()
 
 
+def handle_json(payload):
+    try:
+        data = json.loads(payload)
+        print("json data= ", data)
+        send_esp32_mqtt(data[value])
+        print("data[value]= ", data)
+    except:
+        print("ошибка обработки payload json")
+
 
 def mqtt_connect():
     # Client.on_connect
     def mqtt_reconnect(mqttClient, userdata, flags, reason_code, properties=None):
         if reason_code == 0: print("подключен mqtt")
         else: print(f"ошибка: {reason_code}")
-        mqttClient.subscribe(topic="home/led/state")
+        mqttClient.subscribe(topic="home/devices/+/state")
 
     # client.on_message
     # mqttmessage - class paho.mqtt.client.MQTTMessage
     def mqtt_message(mqttClient, userdata, mqttmessage):
-        print(str(mqttmessage.payload, encoding='utf-8'))  # байты payload --> тип str
+        payload = str(mqttmessage.payload, encoding='utf-8')
+        print(payload)  # байты payload --> тип str
+        handle_json(payload)
         
     
     # создаю объект mqttClient типа mqtt_client.Client(). paho.mqtt.client
@@ -84,7 +95,7 @@ def toRF24():
 # req - запрос от яндекса
 # подробнее в доке: https://yandex.ru/dev/dialogs/alice/doc/ru/response
 # пример: https://github.com/yandex/alice-skills/blob/master/python/buy-elephant/now/api.py
-@app.route("/alice/SECRET_URL", methods=["POST"])
+@app.route("/alice/6krzTZQ7OJmUb3xTHXs1J5sD4UIPgqh5Ry6TqtMoNo8", methods=["POST"])
 def handle_yandex():
     req = request.json
     print(req)
