@@ -16,13 +16,27 @@ WiFiClient wifiClient;  // TCP/IP
 PubSubClient mqttClient(wifiClient);  // указываем в качестве парам, на каком стеке/протоколе будет связь
 
 // https://pubsubclient.knolleary.net/api#publish
-void toBroker(char* state)
+void toBroker(char* value)
 {
-  mqttClient.publish("home/led/state",  // topic const char[]
-                     state,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
-                     //sizeof(val),  // length unsigned int
-                     true  // retained boolean (optional)
-  );
+    // Allocate the JSON document
+  JsonDocument data;
+  //data["name"] = "esp-диод";
+  //data["type"] = "switch";
+  data["value"] = value;
+  //data["status"] = true;
+  //data["error"] = 0;
+
+  size_t len = measureJson(data);  // возвращает количество символов, которое serializeJson(), за исключением нулевого символа-терминатора.
+  char payload[len+1];
+  //Serial.println(len);  // размер строки без терминатора
+  serializeJson(data, payload, len+1);  //  возвращает количество записанных байт без терминатора
+  Serial.println(payload);
+
+  mqttClient.publish("home/devices/led/state",  // topic const char[]
+                    payload,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
+                    //sizeof(val),  // length unsigned int
+                    true  // retained boolean (optional)
+                    );
 }
 
 void callback(char* topic, byte* payload, unsigned int length)
@@ -38,7 +52,7 @@ void callback(char* topic, byte* payload, unsigned int length)
   if (strcmp(strCmd, "ledOn") == 0) {
     digitalWrite(ledPin, HIGH); toBroker("ON");
     Serial.println(strCmd);
-  }
+  } 
   else if (strcmp(strCmd, "ledOff") == 0) {
     digitalWrite(ledPin, LOW); toBroker("OFF");
     Serial.println(strCmd);
@@ -47,7 +61,7 @@ void callback(char* topic, byte* payload, unsigned int length)
 
 }
 
-void reconnect()
+void reconnect() 
 {
   // Loop until we're reconnected
   while (!mqttClient.connected()) {
@@ -62,7 +76,11 @@ void reconnect()
       // Once connected, publish an announcement...
       //mqttClient.publish("outTopic", "hello world");
       // ... and resubscribe
-      mqttClient.subscribe("home/devices/<clientId>/cmd");  // Как прописать ID устройства?
+      mqttClient.subscribe("home/devices/esp_led/cmd");  // Как прописать ID устройства?
+
+      if (digitalRead(ledPin) == HIGH) {toBroker("ON");}
+      else {toBroker("OFF");}
+
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqttClient.state());
@@ -73,21 +91,7 @@ void reconnect()
   }
 }
 
-// запрос на сервер
-void req_json()
-{
-  // Allocate the JSON document
-  JsonDocument data;
-  data["name"] = "esp-диод";
-  data["type"] = "switch";
-  data["command"] = "ON";
-  data["status"] = true;
-  data["error"] = 0;
-
-  serializeJson(data, Serial);
-}
-
-void setup()
+void setup() 
 {
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
@@ -100,47 +104,46 @@ void setup()
   }
 
   Serial.println(WiFi.localIP());
+  mqttClient.setBufferSize(512);  // лимит пакета
   mqttClient.setCallback(callback);
   mqttClient.setServer(ip_orange, 1883);  // ip сервера и порт, mqtt server
   //EspServer.begin();  // HTTP
   Serial.println("mqtt server...");
 
-  digitalWrite(ledPin, HIGH);
-
   //char[256] data;
 }
 
-void loop()
+void loop() 
 {
-
+  
   // mqtt server
   if (!mqttClient.connected()) {
     reconnect();
   }
   mqttClient.loop();  // обработка клиента
-
-
+  
+  
   // передача по HTTP
   /*
-   *  WiFiClient client = EspServer.available();
-   *
-   *  if (client) {
-   *    String request = client.readString();  // readString ждет 1с. Альтернатива -  readStringUntil('\n')
-   *
-   *    if (request.indexOf("GET /?command=1") != -1) {
-   *      Serial.write('1');
-   *      digitalWrite(ledPin, HIGH);
-   *      client.println("HTTP/1.1 200 OK");
-   *      client.println();
-}
-else if (request.indexOf("GET /?command=0") != -1) {
-  Serial.write('0');
-  digitalWrite(ledPin, LOW);
-  client.println("HTTP/1.1 200 OK");
-  client.println();
-}
+  WiFiClient client = EspServer.available();
 
-client.stop();
-}
-*/
+  if (client) {
+    String request = client.readString();  // readString ждет 1с. Альтернатива -  readStringUntil('\n')
+
+    if (request.indexOf("GET /?command=1") != -1) {
+      Serial.write('1');
+      digitalWrite(ledPin, HIGH);
+      client.println("HTTP/1.1 200 OK");
+      client.println();
+    }
+    else if (request.indexOf("GET /?command=0") != -1) {
+      Serial.write('0');
+      digitalWrite(ledPin, LOW);
+      client.println("HTTP/1.1 200 OK");
+      client.println();
+    }
+
+    client.stop();
+  }
+  */
 }
