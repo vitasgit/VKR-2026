@@ -5,15 +5,15 @@ from paho.mqtt import client as mqtt_client
 
 app = Flask(__name__)
 
-def send_esp32_mqtt(cmd):
+def toDevice(cmd):
     # проверка что команда корректная
     # ...
     
     mqttClient.publish(topic="home/devices/esp_led/cmd",
-                   payload=cmd,
-                   qos=0,  # без подтверждений
-                   retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
-                   )
+                       payload=cmd,
+                       qos=0,  # без подтверждений
+                       retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
+                       )
     # return True если успешно выполнился client.publish()
 
 
@@ -21,7 +21,7 @@ def handle_json(payload):
     try:
         data = json.loads(payload)
         print("json data= ", data)
-        send_esp32_mqtt(data[value])
+        toDevice(data['value'])
         print("data[value]= ", data)
     except:
         print("ошибка обработки payload json")
@@ -37,8 +37,8 @@ def mqtt_connect():
     # client.on_message
     # mqttmessage - class paho.mqtt.client.MQTTMessage
     def mqtt_message(mqttClient, userdata, mqttmessage):
-        payload = str(mqttmessage.payload, encoding='utf-8')
-        print(payload)  # байты payload --> тип str
+        payload = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
+        # print(payload)
         handle_json(payload)
         
     
@@ -71,7 +71,7 @@ def toESP32():
         #print(request.form.get('submit'))
 
         #send_esp32(cmd)  # HTTP
-        send_esp32_mqtt(cmd)  # mqtt
+        toDevice(cmd)  # mqtt
         # сделать проверку что ф-ция сработала как в RF24
         #if (send_esp32(cmd)): print("ОК")
 
@@ -120,13 +120,13 @@ def handle_yandex():
         "свет" in req["request"]["command"]
         ):
         res['response']['text'] = 'Включаю свет'
-        send_esp32_mqtt("ledOn")
+        toDevice("ledOn")
 
     elif ("выключи" in req["request"]["command"] and
         "свет" in req["request"]["command"]
         ):
         res['response']['text'] = 'Выключаю'
-        send_esp32_mqtt("ledOff")
+        toDevice("ledOff")
 
     else:
         res['response']['text'] = 'Не поняла. Я умею только включать и выключать свет'
