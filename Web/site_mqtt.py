@@ -4,11 +4,17 @@ import time, requests, json
 from paho.mqtt import client as mqtt_client
 
 app = Flask(__name__)
+devices = {}
 
 def toDevice(cmd):
     # проверка что команда корректная
     # ...
-    
+    cmd = {"value": data["value"]}
+    json.dumps(
+        cmd,
+        ensure_ascii=False,  # поддержка русского
+        indent=2  # два пробела
+        )
     mqttClient.publish(topic="home/devices/esp_led/cmd",
                        payload=cmd,
                        qos=0,  # без подтверждений
@@ -17,12 +23,15 @@ def toDevice(cmd):
     # return True если успешно выполнился client.publish()
 
 
-def handle_json(payload):
+def handle_json(topic, payload):
+    arr = topic.split("/")
+    dev = arr[2]  # id, имя устройства
+    
     try:
         data = json.loads(payload)
-        print("json data= ", data)
-        toDevice(data['value'])
-        print("data[value]= ", data)
+        devices[dev] = data
+        # print("json data= ", data)
+        print("devices:") print(devices)
     except:
         print("ошибка обработки payload json")
 
@@ -39,7 +48,7 @@ def mqtt_connect():
     def mqtt_message(mqttClient, userdata, mqttmessage):
         payload = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
         # print(payload)
-        handle_json(payload)
+        handle_json(mqttmessage.topic, payload)
         
     
     # создаю объект mqttClient типа mqtt_client.Client(). paho.mqtt.client
