@@ -9,14 +9,14 @@ devices = {}
 def toDevice(cmd):
     # проверка что команда корректная
     # ...
-    cmd = {"value": data["value"]}
-    json.dumps(
-        cmd,
+    command = {"value": cmd}
+    js_payload = json.dumps(
+        command,
         ensure_ascii=False,  # поддержка русского
         indent=2  # два пробела
         )
     mqttClient.publish(topic="home/devices/esp_led/cmd",
-                       payload=cmd,
+                       payload=js_payload,
                        qos=0,  # без подтверждений
                        retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
                        )
@@ -31,7 +31,8 @@ def handle_json(topic, payload):
         data = json.loads(payload)
         devices[dev] = data
         # print("json data= ", data)
-        print("devices:") print(devices)
+        print("devices:")
+        print(devices)
     except:
         print("ошибка обработки payload json")
 
