@@ -32,7 +32,7 @@ void toBroker(char* value)
   serializeJson(data, payload, len+1);  //  возвращает количество записанных байт без терминатора
   Serial.println(payload);
 
-  mqttClient.publish("home/devices/led/state",  // topic const char[]
+  mqttClient.publish("home/devices/esp_led/state",  // topic const char[]
                     payload,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
                     //sizeof(val),  // length unsigned int
                     true  // retained boolean (optional)
@@ -45,17 +45,19 @@ void callback(char* topic, byte* payload, unsigned int length)
 
   // обработать json ответ от сервера
   // ...
-  char strCmd[length+1];
-  memcpy(strCmd, payload, length);
-  strCmd[length] = '\0';
+  JsonDocument data;
+  deserializeJson(data, payload, length);
+  // проверка на отсутсвие ошибок в json ... DeserializationError error = deserializeJson(data, payload, length)
+  const char *pvalue = data["value"];  // по доке json тип должен быть const
+  // проверка на отсутвие value ...
 
-  if (strcmp(strCmd, "ledOn") == 0) {
+  if (strcmp(pvalue, "ON") == 0) {
     digitalWrite(ledPin, HIGH); toBroker("ON");
-    Serial.println(strCmd);
-  } 
-  else if (strcmp(strCmd, "ledOff") == 0) {
+    Serial.println(pvalue);
+  }
+  else if (strcmp(pvalue, "OFF") == 0) {
     digitalWrite(ledPin, LOW); toBroker("OFF");
-    Serial.println(strCmd);
+    Serial.println(pvalue);
   }
   else {Serial.println("ошибка передачи mqtt");}
 
@@ -76,7 +78,7 @@ void reconnect()
       // Once connected, publish an announcement...
       //mqttClient.publish("outTopic", "hello world");
       // ... and resubscribe
-      mqttClient.subscribe("home/devices/esp_led/cmd");  // Как прописать ID устройства?
+      mqttClient.subscribe("home/devices/esp_led/cmd");
 
       if (digitalRead(ledPin) == HIGH) {toBroker("ON");}
       else {toBroker("OFF");}
