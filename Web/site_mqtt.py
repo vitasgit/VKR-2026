@@ -6,7 +6,7 @@ from paho.mqtt import client as mqtt_client
 app = Flask(__name__)
 devices = {}
 
-def toDevice(cmd):
+def toDevice(device_id, cmd):
     # проверка что команда корректная
     # ...
     command = {"value": cmd}
@@ -15,7 +15,7 @@ def toDevice(cmd):
         ensure_ascii=False,  # поддержка русского
         indent=2  # два пробела
         )
-    mqttClient.publish(topic="home/devices/esp_led/cmd",
+    mqttClient.publish(topic=f"home/devices/{device_id}/cmd",
                        payload=js_payload,
                        qos=0,  # без подтверждений
                        retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
@@ -74,14 +74,14 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/esp32", methods=["POST", "GET"])
-def toESP32():
+@app.route("/device", methods=["POST", "GET"])
+def device():
     if request.method == "POST":
         cmd = request.form.get('esp32')   # обращаемся к полю submit (name="submit")
         #print(request.form.get('submit'))
 
         #send_esp32(cmd)  # HTTP
-        toDevice(cmd)  # mqtt
+        toDevice(device_id, cmd)  # mqtt
         # сделать проверку что ф-ция сработала как в RF24
         #if (send_esp32(cmd)): print("ОК")
 
