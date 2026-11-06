@@ -3,6 +3,9 @@ import time, requests, json
 #import paho.mqtt.publish as publish
 from paho.mqtt import client as mqtt_client
 
+# для генерации html
+from jinja2 import Template
+
 app = Flask(__name__)
 devices = {}
 
@@ -35,7 +38,7 @@ def handle_json(topic, payload):
         print(devices)
     except:
         print("ошибка обработки payload json")
-
+    
 
 def mqtt_connect():
     # Client.on_connect
@@ -71,13 +74,14 @@ def mqtt_connect():
 
 @app.route("/", methods=["POST", "GET"])
 def index():
-    return render_template('index.html')
+    return render_template('index.html', devices=devices)  # передаем словарь devices в переменную devices
 
 
 @app.route("/device", methods=["POST", "GET"])
 def device():
     if request.method == "POST":
-        cmd = request.form.get('esp32')   # обращаемся к полю submit (name="submit")
+        cmd = request.form.get('cmd')   # обращаемся к полю submit (name="cmd")
+        device_id = request.form.get('device_id')
         #print(request.form.get('submit'))
 
         #send_esp32(cmd)  # HTTP
@@ -86,7 +90,7 @@ def device():
         #if (send_esp32(cmd)): print("ОК")
 
     
-    return render_template('index.html')
+    return render_template('index.html', devices=devices)
 
 
 @app.route("/RF24", methods=["POST", "GET"])
@@ -155,5 +159,7 @@ if __name__ == '__main__':
     mqttClient = mqtt_connect()
     # print("mqttClient.is_connected() == ", mqttClient.is_connected())
     mqttClient.loop_start()
+
+    print("devices: \n", devices)
     
     app.run(host='0.0.0.0', port=5000, debug=False)
