@@ -7,11 +7,21 @@
     <title>Главная</title>
 </head>
 <body>
-   <h1>esp32</h1>
-   <form action="device" method="post">
-        <button type="submit" name="device_id" value="ON">Включить</button><br><br>
-        <button type="submit" name="device_id" value="OFF">Выключить</button><br><br>
-   </form>
+   <h1>Устройства</h1>
+
+    {% for i in devices %}
+        {% set dev = devices[i] %}
+
+        <div>Устройство: {{ dev['name'] }}, значение: {{ dev['value'] }}</div>
+
+        {% if dev['type'] == "switch" %}
+            <form action="device" method="post">
+                <input type="hidden" name="device_id" value="{{device_id}}">
+                <button type="submit" name="cmd" value="ON">Включить</button><br><br>
+                <button type="submit" name="cmd" value="OFF">Выключить</button><br><br>
+            </form>
+        {% endif %}
+    {% endfor %}
 
    <h1>RF24</h1>
    <form action="RF24" method="post">
