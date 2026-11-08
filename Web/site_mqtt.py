@@ -8,6 +8,7 @@ from jinja2 import Template
 
 app = Flask(__name__)
 devices = {}
+lives = {}
 
 def toDevice(device_id, cmd):
     # проверка что команда корректная
@@ -38,7 +39,12 @@ def handle_json(topic, payload):
         print(devices)
     except:
         print("ошибка обработки payload json")
-    
+
+
+def handle_live(topic, payload):
+    arr = topic.split("/")
+    dev = arr[2]
+    lives[dev] = payload
 
 def mqtt_connect():
     # Client.on_connect
@@ -46,13 +52,17 @@ def mqtt_connect():
         if reason_code == 0: print("подключен mqtt")
         else: print(f"ошибка: {reason_code}")
         mqttClient.subscribe(topic="home/devices/+/state")
+        mqttClient.subscribe(topic="home/devices/+/live")
 
     # client.on_message
     # mqttmessage - class paho.mqtt.client.MQTTMessage
     def mqtt_message(mqttClient, userdata, mqttmessage):
         payload = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
         # print(payload)
-        handle_json(mqttmessage.topic, payload)
+
+        arrTopic = topic.split("/")
+        if (mqttmessage.arrTopic[-1] == "live"): handle_live(mqttmessage.topic, payload) 
+        else: handle_json(mqttmessage.topic, payload)
         
     
     # создаю объект mqttClient типа mqtt_client.Client(). paho.mqtt.client
@@ -74,7 +84,7 @@ def mqtt_connect():
 
 @app.route("/", methods=["POST", "GET"])
 def index():
-    return render_template('index.html', devices=devices)  # передаем словарь devices в переменную devices
+    return render_template('index.html', devices=devices, lives=lives)  # передаем словарь devices в переменную devices
 
 
 @app.route("/device", methods=["POST", "GET"])
@@ -90,7 +100,7 @@ def device():
         #if (send_esp32(cmd)): print("ОК")
 
     
-    return render_template('index.html', devices=devices)
+    return render_template('index.html', devices=devices, lives=lives)
 
 
 @app.route("/RF24", methods=["POST", "GET"])
