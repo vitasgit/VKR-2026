@@ -7,24 +7,30 @@
 const char* ssid = MY_SSID;
 const char* password = MY_PASSWORD;
 
+// подключение к mqtt брокеру
+// пользователи создаются в /etc/mosquitto/passwd
+const char* mqttUser = "vitaly";
+const char* mqttPasswd = 123456;
+const char* liveTopic = "home/devices/esp_led/live";
+
 int ledPin = 2;
 
 // WiFiServer EspServer(80);  // HTTP
-// IPAddress ip_orange(192, 168, 0, 101);   // 4 байта дома статика
-IPAddress ip_orange(192, 168, 43, 78);   // 4 байта телефон технопарк
+IPAddress ip_orange(192, 168, 0, 101);   // 4 байта дома статика
+//IPAddress ip_orange(192, 168, 43, 78);   // 4 байта телефон технопарк
 WiFiClient wifiClient;  // TCP/IP
 PubSubClient mqttClient(wifiClient);  // указываем в качестве парам, на каком стеке/протоколе будет связь
 
 // https://pubsubclient.knolleary.net/api#publish
 void toBroker(char* value)
 {
-    // Allocate the JSON document
+  // Allocate the JSON document
   JsonDocument data;
-  //data["name"] = "esp-диод";
-  //data["type"] = "switch";
+  data["name"] = "esp-диод";
+  data["type"] = "switch";
   data["value"] = value;
-  //data["status"] = true;
-  //data["error"] = 0;
+  data["status"] = true;
+  data["error"] = 0;
 
   size_t len = measureJson(data);  // возвращает количество символов, которое serializeJson(), за исключением нулевого символа-терминатора.
   char payload[len+1];
@@ -33,10 +39,10 @@ void toBroker(char* value)
   Serial.println(payload);
 
   mqttClient.publish("home/devices/esp_led/state",  // topic const char[]
-                    payload,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
-                    //sizeof(val),  // length unsigned int
-                    true  // retained boolean (optional)
-                    );
+                     payload,  // payload const char[], byte[] - две функции/перезагрузки. для строк длина не нужна
+                     //sizeof(val),  // length unsigned int
+                     true  // retained boolean (optional)
+  );
 }
 
 void callback(char* topic, byte* payload, unsigned int length)
@@ -63,18 +69,21 @@ void callback(char* topic, byte* payload, unsigned int length)
 
 }
 
-void reconnect() 
+void reconnect()
 {
   // Loop until we're reconnected
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
-    String deviceId = "espID-";
+    String mqttClientID = "mqttEspID-";
     deviceId += String(random(0xffff), HEX);
+
+    // про MQTT availability topic: https://community.home-assistant.io/t/mqtt-availability-topic/369513
     // Attempt to connect
-    // boolean connect (deviceId, [username, password], [willTopic, willQoS, willRetain, willMessage], [cleanSession])
-    if (mqttClient.connect(deviceId.c_str(), "vitaly", "123456")) {  // id, [имя_юзера, пароль] - пользователь из passwd, mqtt server
+    // boolean connect (clientID, [username, password], [willTopic, willQoS, willRetain, willMessage], [cleanSession])
+    if (mqttClient.connect(mqttClientID.c_str(), mqttUser, mqttPasswd, liveTopic, 0, true, "offline")) {
       Serial.println("connected");
+      client.publish(liveTopic, "online", true);
       // Once connected, publish an announcement...
       //mqttClient.publish("outTopic", "hello world");
       // ... and resubscribe
@@ -93,7 +102,7 @@ void reconnect()
   }
 }
 
-void setup() 
+void setup()
 {
   pinMode(ledPin, OUTPUT);
   Serial.begin(115200);
@@ -115,37 +124,37 @@ void setup()
   //char[256] data;
 }
 
-void loop() 
+void loop()
 {
-  
+
   // mqtt server
   if (!mqttClient.connected()) {
     reconnect();
   }
   mqttClient.loop();  // обработка клиента
-  
-  
+
+
   // передача по HTTP
   /*
-  WiFiClient client = EspServer.available();
+   *  WiFiClient client = EspServer.available();
+   *
+   *  if (client) {
+   *    String request = client.readString();  // readString ждет 1с. Альтернатива -  readStringUntil('\n')
+   *
+   *    if (request.indexOf("GET /?command=1") != -1) {
+   *      Serial.write('1');
+   *      digitalWrite(ledPin, HIGH);
+   *      client.println("HTTP/1.1 200 OK");
+   *      client.println();
+}
+else if (request.indexOf("GET /?command=0") != -1) {
+  Serial.write('0');
+  digitalWrite(ledPin, LOW);
+  client.println("HTTP/1.1 200 OK");
+  client.println();
+}
 
-  if (client) {
-    String request = client.readString();  // readString ждет 1с. Альтернатива -  readStringUntil('\n')
-
-    if (request.indexOf("GET /?command=1") != -1) {
-      Serial.write('1');
-      digitalWrite(ledPin, HIGH);
-      client.println("HTTP/1.1 200 OK");
-      client.println();
-    }
-    else if (request.indexOf("GET /?command=0") != -1) {
-      Serial.write('0');
-      digitalWrite(ledPin, LOW);
-      client.println("HTTP/1.1 200 OK");
-      client.println();
-    }
-
-    client.stop();
-  }
-  */
+client.stop();
+}
+*/
 }
