@@ -12,11 +12,11 @@
     {% for i in devices %}
         {% set dev = devices[i] %}
 
-        <div>Устройство: {{ dev['name'] }}, значение: {{ dev['value'] }}</div>
+        <div>Устройство: {{ dev['name'] }}, значение: {{ dev['value'] }}, сеть: {{lives[i]}}</div>
 
         {% if dev['type'] == "switch" %}
             <form action="device" method="post">
-                <input type="hidden" name="device_id" value="{{device_id}}">
+                <input type="hidden" name="device_id" value="{{i}}">
                 <button type="submit" name="cmd" value="ON">Включить</button><br><br>
                 <button type="submit" name="cmd" value="OFF">Выключить</button><br><br>
             </form>
