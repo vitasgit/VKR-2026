@@ -60,8 +60,8 @@ def mqtt_connect():
         payload = str(mqttmessage.payload, encoding='utf-8')  # байты payload --> тип str
         # print(payload)
 
-        arrTopic = topic.split("/")
-        if (mqttmessage.arrTopic[-1] == "live"): handle_live(mqttmessage.topic, payload) 
+        arrTopic = mqttmessage.topic.split("/")
+        if (arrTopic[-1] == "live"): handle_live(mqttmessage.topic, payload) 
         else: handle_json(mqttmessage.topic, payload)
         
     
