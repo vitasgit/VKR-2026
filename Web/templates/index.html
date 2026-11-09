@@ -12,7 +12,11 @@
     {% for i in devices %}
         {% set dev = devices[i] %}
 
-        <div>Устройство: {{ dev['name'] }}, значение: {{ dev['value'] }}, сеть: {{lives[i]}}</div>
+        <div>
+            Устройство: {{dev['name']}},
+            значение: <span id=val_{{i}}>{{dev['value']}}</span>,
+            сеть: <span id=live_{{i}}>{{lives[i]}}</span>
+        </div>
 
         {% if dev['type'] == "switch" %}
             <form action="device" method="post">
@@ -28,5 +32,20 @@
         <button type="submit" name="RF24" value="1">Включить</button><br><br>
         <button type="submit" name="RF24" value="0">Выключить</button><br><br>
    </form>
+
+   <script>
+        async function updateStatus() {
+        let response = await fetch("/api/status");
+        let data = await response.json();
+
+        for (let i in data["devices"]) {
+            val_id = "val_" + i;
+            live_id = "live_" + i;
+            document.getElementById(val_id).textContent= data["devices"][i]["value"];
+            document.getElementById(live_id).textContent= data["lives"][i];
+        }
+    }
+    setInterval(updateStatus, 1000);
+   </script>
 </body>
 </html>
