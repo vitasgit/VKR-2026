@@ -10,7 +10,7 @@ const char* password = MY_PASSWORD;
 // подключение к mqtt брокеру
 // пользователи создаются в /etc/mosquitto/passwd
 const char* mqttUser = "vitaly";
-const char* mqttPasswd = 123456;
+const char* mqttPasswd = "123456";
 const char* liveTopic = "home/devices/esp_led/live";
 
 int ledPin = 2;
@@ -76,14 +76,14 @@ void reconnect()
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String mqttClientID = "mqttEspID-";
-    deviceId += String(random(0xffff), HEX);
+    mqttClientID += String(random(0xffff), HEX);
 
     // про MQTT availability topic: https://community.home-assistant.io/t/mqtt-availability-topic/369513
     // Attempt to connect
     // boolean connect (clientID, [username, password], [willTopic, willQoS, willRetain, willMessage], [cleanSession])
     if (mqttClient.connect(mqttClientID.c_str(), mqttUser, mqttPasswd, liveTopic, 0, true, "offline")) {
       Serial.println("connected");
-      client.publish(liveTopic, "online", true);
+      mqttClient.publish(liveTopic, "online", true);
       // Once connected, publish an announcement...
       //mqttClient.publish("outTopic", "hello world");
       // ... and resubscribe
