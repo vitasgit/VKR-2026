@@ -45,6 +45,7 @@ def handle_live(topic, payload):
     arr = topic.split("/")
     dev = arr[2]
     lives[dev] = payload
+    
 
 def mqtt_connect():
     # Client.on_connect
@@ -102,6 +103,16 @@ def device():
     
     return render_template('index.html', devices=devices, lives=lives)
 
+@app.route("/api/status", methods=["GET"])
+def get_status():    
+    data = {"devices": devices, "lives": lives}
+
+    return json.dumps(
+        data,
+        ensure_ascii=False,
+        indent=2
+        )
+
 
 @app.route("/RF24", methods=["POST", "GET"])
 def toRF24():
@@ -139,12 +150,13 @@ def handle_yandex():
     # нет проверки на случай если command в запросе нет
 
     # new - boolean, если true, то сессия новая
+    device_id = request.form.get('device_id')
     if (req['session']['new']): res['response']['text'] = 'Привет! Я умею только включать и выключать свет'  # !! баг
     if ("включи" in req["request"]["command"] and
         "свет" in req["request"]["command"]
         ):
         res['response']['text'] = 'Включаю свет'
-        toDevice("ledOn")
+        toDevice(device_id, cmd)
 
     elif ("выключи" in req["request"]["command"] and
         "свет" in req["request"]["command"]
