@@ -104,7 +104,7 @@ def device():
     return render_template('index.html', devices=devices, lives=lives)
 
 @app.route("/api/status", methods=["GET"])
-def get_status():    
+def get_status():
     data = {"devices": devices, "lives": lives}
 
     return json.dumps(
@@ -112,18 +112,6 @@ def get_status():
         ensure_ascii=False,
         indent=2
         )
-
-
-@app.route("/RF24", methods=["POST", "GET"])
-def toRF24():
-    if request.method == "POST":
-        cmd = request.form.get('RF24')   # обращаемся к полю submit (name="submit")
-        mqttClient.publish(topic="home/air/cmd",
-                   payload=cmd,
-                   qos=0,  # без подтверждений
-                   retain=True  # брокер передаст контроллеру последнее отправленное сообщение (если контроллер вырубит, то ему будет отправлено посл сообщение)
-                   )
-    return render_template('index.html')
 
 
 # Получаем запрос от Яндекса и возвращаем ответ
@@ -156,17 +144,18 @@ def handle_yandex():
         "свет" in req["request"]["command"]
         ):
         res['response']['text'] = 'Включаю свет'
-        toDevice(device_id, cmd)
+        toDevice(device_id, "ON")
 
     elif ("выключи" in req["request"]["command"] and
         "свет" in req["request"]["command"]
         ):
         res['response']['text'] = 'Выключаю'
-        toDevice("ledOff")
+        toDevice(device_id, "OFF")
 
     else:
         res['response']['text'] = 'Не поняла. Я умею только включать и выключать свет'
 
+    # ответ яндексу
     return json.dumps(
         res,
         ensure_ascii=False,  # поддержка русского
