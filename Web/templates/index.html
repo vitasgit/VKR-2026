@@ -27,11 +27,42 @@
         {% endif %}
     {% endfor %}
 
-   <h1>RF24</h1>
-   <form action="RF24" method="post">
-        <button type="submit" name="RF24" value="1">Включить</button><br><br>
-        <button type="submit" name="RF24" value="0">Выключить</button><br><br>
-   </form>
+    <!-- Сценарии   -->
+    <form action="scenaries" method="post">
+        <select name="if_dev">
+        {% for i in devices %}
+            <option value="{{i}}">{{devices[i]['name']}}</option>
+        {% endfor %}
+        </select>
+
+        <select name="oper">
+            <option value="==">=</option>
+            <option value="<">≤</option>
+            <option value=">">≥</option>
+        </select>
+
+        <input type="text" name="if_val">
+
+        <select name="then_dev">
+        {% for i in devices %}
+            <option value="{{i}}">{{devices[i]['name']}}</option>
+        {% endfor %}
+        </select>
+
+        <select name="then_cmd">
+            <option value="ON">Включить</option>
+            <option value="OFF">Выключить</option>
+        </select>
+
+        <button type="submit" name="add_scen" value="ON">Создать сценарий</button><br><br>
+        <button type="submit" name="remove_scen" value="OFF">Удалить всё</button><br><br>
+    </form>
+
+    {% for i in scenaries %}
+        {% set s = scenaries[i] %}
+        <p>Если {{ s['if_dev'] }} {{ s['oper'] }} {{ s['if_val'] }}, то {{ s['then_dev'] }} = {{ s['then_cmd'] }}</p>
+    {%endfor%}
+
 
    <script>
         async function updateStatus() {
