@@ -28,6 +28,19 @@ def toDevice(device_id, cmd):
     # return True если успешно выполнился client.publish()
 
 
+def check_scen(dev, val):
+    for i in scenaries:
+        s = scenaries[i]
+        
+        if s["if_dev"] == dev:
+            if s["oper"] == "==":
+                if str(s["if_val"]) == str(val): toDevice(s["then_dev"], s["then_cmd"])
+            elif s["oper"] == "<":
+                if float(val) < float(s["if_val"]): toDevice(s["then_dev"], s["then_cmd"])
+            elif s["oper"] == ">":
+                if float(val) > float(s["if_val"]): toDevice(s["then_dev"], s["then_cmd"])
+
+
 def handle_json(topic, payload):
     arr = topic.split("/")
     dev = arr[2]  # id, имя устройства
@@ -35,6 +48,7 @@ def handle_json(topic, payload):
     try:
         data = json.loads(payload)
         devices[dev] = data
+        check_scen(dev, data["value"])
         # print("json data= ", data)
         print("devices:")
         print(devices)
