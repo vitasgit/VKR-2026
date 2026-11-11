@@ -9,6 +9,7 @@ from jinja2 import Template
 app = Flask(__name__)
 devices = {}
 lives = {}
+scenaries = {}
 
 def toDevice(device_id, cmd):
     # проверка что команда корректная
@@ -45,8 +46,8 @@ def handle_live(topic, payload):
     arr = topic.split("/")
     dev = arr[2]
     lives[dev] = payload
-    
 
+    
 def mqtt_connect():
     # Client.on_connect
     def mqtt_reconnect(mqttClient, userdata, flags, reason_code, properties=None):
@@ -85,7 +86,7 @@ def mqtt_connect():
 
 @app.route("/", methods=["POST", "GET"])
 def index():
-    return render_template('index.html', devices=devices, lives=lives)  # передаем словарь devices в переменную devices
+    return render_template('index.html', devices=devices, lives=lives, scenaries=scenaries)  # передаем словарь devices в переменную devices
 
 
 @app.route("/device", methods=["POST", "GET"])
@@ -101,7 +102,7 @@ def device():
         #if (send_esp32(cmd)): print("ОК")
 
     
-    return render_template('index.html', devices=devices, lives=lives)
+    return render_template('index.html', devices=devices, lives=lives, scenaries=scenaries)
 
 @app.route("/api/status", methods=["GET"])
 def get_status():
@@ -112,6 +113,31 @@ def get_status():
         ensure_ascii=False,
         indent=2
         )
+
+
+@app.route("/scenaries", methods=["POST"])
+def handle_scen():
+    if request.method == "POST":
+        if_dev = request.form.get('if_dev')
+        oper = request.form.get('oper')
+        if_val = request.form.get('if_val')
+        then_dev = request.form.get('then_dev')
+        then_cmd = request.form.get('then_cmd')
+
+        if (if_dev != then_dev):
+            scen_id = len(scenaries)
+            scenaries[scen_id] = {
+                "if_dev": if_dev,
+                "oper": oper,
+                "if_val": if_val,
+                "then_dev": then_dev,
+                "then_cmd": then_cmd
+                }
+        else:
+            print("ошибка: if_dev == then_dev")
+            
+        
+    return render_template('index.html', devices=devices, lives=lives, scenaries=scenaries)
 
 
 # Получаем запрос от Яндекса и возвращаем ответ
