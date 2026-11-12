@@ -158,6 +158,7 @@ def handle_scen():
 # req - запрос от яндекса
 # подробнее в доке: https://yandex.ru/dev/dialogs/alice/doc/ru/response
 # пример: https://github.com/yandex/alice-skills/blob/master/python/buy-elephant/now/api.py
+# !!!! URL выдуманный (поменять на настоящий) !!!!
 @app.route("/alice/6krzTZQ7OJmUb3xTHXs1J5sD4UIPgqh5Ry6TqtMoNo8", methods=["POST"])
 def handle_yandex():
     req = request.json
