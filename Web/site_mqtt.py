@@ -158,8 +158,7 @@ def handle_scen():
 # req - запрос от яндекса
 # подробнее в доке: https://yandex.ru/dev/dialogs/alice/doc/ru/response
 # пример: https://github.com/yandex/alice-skills/blob/master/python/buy-elephant/now/api.py
-# !!!! URL выдуманный (поменять на настоящий) !!!!
-@app.route("/alice/6krzTZQ7OJmUb3xTHXs1J5sD4UIPgqh5Ry6TqtMoNo8", methods=["POST"])
+@app.route("/alice/SECRET_URL", methods=["POST"])
 def handle_yandex():
     req = request.json
     print(req)
@@ -179,7 +178,7 @@ def handle_yandex():
     # нет проверки на случай если command в запросе нет
 
     # new - boolean, если true, то сессия новая
-    device_id = request.form.get('device_id')
+    device_id = "esp_led"
     if (req['session']['new']): res['response']['text'] = 'Привет! Я умею только включать и выключать свет'  # !! баг
     if ("включи" in req["request"]["command"] and
         "свет" in req["request"]["command"]
